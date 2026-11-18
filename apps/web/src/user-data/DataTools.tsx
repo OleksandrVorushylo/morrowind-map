@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
-import type { Locale } from '@morrowind-map/contracts';
 import {
   userDatabase,
   type MorrowindMapDatabase,
@@ -25,7 +24,7 @@ type Feedback =
 export interface DataToolsProps {
   readonly datasetId: string;
   readonly knownPlaceIds: ReadonlySet<string>;
-  readonly locale: Locale;
+  readonly locale: 'en' | 'ru';
   readonly datasetSnapshots: Readonly<Record<string, string>>;
   readonly database?: MorrowindMapDatabase;
   readonly className?: string;

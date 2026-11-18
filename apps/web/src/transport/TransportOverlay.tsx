@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { DatasetManifest } from '@morrowind-map/contracts';
 import type Map from 'ol/Map.js';
@@ -36,6 +37,8 @@ function preference(mapKey: string): Preference {
 }
 
 export function TransportOverlay({ dataset, places, map, navigation, placingMarker, onChange, onSelect }: Props) {
+  const { i18n } = useTranslation();
+  const russian = i18n.resolvedLanguage === 'ru';
   const [saved, setSaved] = useState(() => preference(dataset.mapKey));
   const [emptySelection, setEmptySelection] = useState(false);
   const enabled = (navigation.transportModes?.length ?? 0) > 0;
@@ -67,6 +70,26 @@ export function TransportOverlay({ dataset, places, map, navigation, placingMark
     const ids = new Set(routes.flatMap((route) => [route.from, route.to]));
     return { ...display.catalog, routes, stops: display.catalog.stops.filter((stop) => ids.has(stop.id)) };
   }, [display]);
+  const controlsCatalog = useMemo(() => {
+    if (!visibleCatalog || !russian) return visibleCatalog;
+    const translations = new globalThis.Map<string, Set<string>>();
+    for (const place of places) {
+      for (const alias of place.aliases) {
+        if (alias === place.name) continue;
+        const values = translations.get(alias) ?? new Set<string>();
+        values.add(place.name);
+        translations.set(alias, values);
+      }
+    }
+    const translate = (name: string): string => {
+      const candidates = translations.get(name);
+      return candidates?.size === 1 ? [...candidates][0]! : name;
+    };
+    return { ...visibleCatalog, stops: visibleCatalog.stops.map((stop) => ({
+      ...stop, name: translate(stop.name),
+      ...(stop.interior ? { interior: translate(stop.interior) } : {}),
+    })) };
+  }, [visibleCatalog, russian, places]);
   const selectedStopId = enabled && visibleCatalog?.stops.some((stop) => stop.id === navigation.transportStopId)
     ? navigation.transportStopId ?? null : null;
   const selectedStop = catalog?.stops.find((stop) => stop.id === selectedStopId);
@@ -80,9 +103,9 @@ export function TransportOverlay({ dataset, places, map, navigation, placingMark
   useEffect(() => {
     if (!map || !enabled || !display) return;
     const layers = createTransportLayers(map);
-    layers.update({ ...display, selectedStopId });
+    layers.update({ ...display, catalog: controlsCatalog ?? display.catalog, selectedStopId });
     return () => layers.dispose();
-  }, [map, enabled, display, selectedStopId]);
+  }, [map, enabled, display, controlsCatalog, selectedStopId]);
 
   const selectStop = useCallback((id: string | null) => {
     setExpanded(false);
@@ -122,7 +145,7 @@ export function TransportOverlay({ dataset, places, map, navigation, placingMark
     }}
     status={enabled && loaded.status === 'idle' ? 'loading' : loaded.status}
     onRetry={() => { setLoaded({ catalog: null, status: 'loading' }); setAttempt((value) => value + 1); }}
-    catalog={visibleCatalog}
+    catalog={controlsCatalog}
     selectedStopId={selectedStopId}
     wikiUrl={selectedStop ? transportWikiUrl(dataset.mapKey, selectedStop, places) : null}
     onCopyLink={async () => {

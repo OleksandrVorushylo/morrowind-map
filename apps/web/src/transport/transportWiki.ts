@@ -18,5 +18,5 @@ export function transportWikiUrl(mapKey: MapKey, stop: TransportStop, places: re
     skyrim: 'home-of-nords', cyrodiil: 'project-cyrodiil',
   };
   return placeWikiUrl(regionMap[stop.regionId] ?? mapKey, stop.regionId,
-    match?.name ?? stop.name, match?.id ?? stop.id);
+    match ? ([match.name, ...match.aliases].find((name) => names.has(normalize(name))) ?? stop.name) : stop.name, match?.id ?? stop.id);
 }

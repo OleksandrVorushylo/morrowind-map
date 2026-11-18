@@ -37,3 +37,12 @@ describe('English place search', () => {
     });
   });
 });
+
+describe('bilingual place search', () => {
+  it('finds Russian and English variants without changing the identifier', () => {
+    const [view] = buildPlaceViews([place], [locale("Ald'ruhn")], 'en');
+    const search = new PlaceSearch([{ ...view!, name: "Альд'рун", aliases: ["Ald'ruhn"] }]);
+    expect(search.search('Альдрун')[0]?.id).toBe(place.id);
+    expect(search.search("Ald'ruhn")[0]?.id).toBe(place.id);
+  });
+});

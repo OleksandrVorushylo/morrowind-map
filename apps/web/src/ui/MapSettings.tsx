@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useRef, useState } from 'react';
 import { PixelIcon } from './PixelIcon';
 import { StatusMark } from './StatusMark';
@@ -8,6 +9,8 @@ interface MapSettingsProps {
 }
 
 export function MapSettings({ colorblind, onColorblindChange }: MapSettingsProps) {
+  const { i18n } = useTranslation();
+  const label = (en: string, ru: string) => i18n.resolvedLanguage === 'ru' ? ru : en;
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -17,8 +20,8 @@ export function MapSettings({ colorblind, onColorblindChange }: MapSettingsProps
       <button
         className="map-settings-trigger"
         type="button"
-        aria-label="Map settings"
-        title="Map settings"
+        aria-label={label('Map settings', 'Настройки карты')}
+        title={label('Map settings', 'Настройки карты')}
         aria-haspopup="dialog"
         aria-controls="map-settings-panel"
         aria-expanded={isOpen}
@@ -44,12 +47,12 @@ export function MapSettings({ colorblind, onColorblindChange }: MapSettingsProps
         <button
           className="landing-contact-panel__close"
           type="button"
-          aria-label="Close map settings"
+          aria-label={label('Close map settings', 'Закрыть настройки карты')}
           onClick={() => dialogRef.current?.close()}
         >
           <PixelIcon name="close" />
         </button>
-        <h2 id="map-settings-title">Map settings</h2>
+        <h2 id="map-settings-title">{label('Map settings', 'Настройки карты')}</h2>
         <label className="map-settings-option">
           <input
             type="checkbox"
@@ -59,19 +62,19 @@ export function MapSettings({ colorblind, onColorblindChange }: MapSettingsProps
               setSaveFailed(!onColorblindChange(event.currentTarget.checked));
             }}
           />
-          <span>Enable colorblind-friendly mode</span>
+          <span>{label('Enable colorblind-friendly mode', 'Режим для людей с нарушением цветовосприятия')}</span>
         </label>
         <p id="map-settings-color-description">
-          Distinguish places and personal markers by both color and shape. Applies immediately to all maps.
+          {label('Distinguish places and personal markers by both color and shape. Applies immediately to all maps.', 'Места и личные метки различаются по цвету и форме. Настройка сразу применяется ко всем картам.')}
         </p>
-        <div className="map-settings-preview" role="group" aria-label="Status color preview">
-          <span><StatusMark kind="unvisited" />Unvisited</span>
-          <span><StatusMark kind="active" />Active</span>
-          <span><StatusMark kind="visited" />Visited</span>
-          <span><StatusMark kind="custom" />Personal marker</span>
+        <div className="map-settings-preview" role="group" aria-label={label('Status color preview', 'Предпросмотр статусов')}>
+          <span><StatusMark kind="unvisited" />{label('Unvisited', 'Не посещено')}</span>
+          <span><StatusMark kind="active" />{label('Active', 'В процессе')}</span>
+          <span><StatusMark kind="visited" />{label('Visited', 'Посещено')}</span>
+          <span><StatusMark kind="custom" />{label('Personal marker', 'Личная метка')}</span>
         </div>
         {saveFailed ? (
-          <p role="status">Colors changed for this session. Your browser could not save the preference.</p>
+          <p role="status">{label('Colors changed for this session. Your browser could not save the preference.', 'Цвета изменены для текущего сеанса. Браузеру не удалось сохранить настройку.')}</p>
         ) : null}
       </dialog>
     </>

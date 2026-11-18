@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useRef, useState } from 'react';
 import {
   ANALYTICS_CONSENT_STORAGE_KEY,
@@ -13,6 +14,8 @@ interface AnalyticsConsentBannerProps {
 }
 
 export function AnalyticsConsentBanner({ showSettings = true }: AnalyticsConsentBannerProps) {
+  const { i18n } = useTranslation();
+  const ru = i18n.resolvedLanguage === 'ru';
   const [consent, setConsent] = useState<AnalyticsConsent | null>(readAnalyticsConsent);
   const [isOpen, setIsOpen] = useState(consent === null);
   const bannerRef = useRef<HTMLElement>(null);
@@ -125,27 +128,25 @@ export function AnalyticsConsentBanner({ showSettings = true }: AnalyticsConsent
           tabIndex={-1}
         >
           <div className="analytics-consent-banner__copy">
-            <h2 id="analytics-consent-title">Analytics cookies</h2>
+            <h2 id="analytics-consent-title">{ru ? 'Файлы cookie аналитики' : 'Analytics cookies'}</h2>
             <p>
-              Your map progress, notes, and markers stay on this device. If you agree,
-              Google Analytics receives usage and device data and may set analytics
-              cookies. Advertising storage stays disabled.{' '}
+              {ru ? 'Ваш прогресс, заметки и метки остаются на этом устройстве. С вашего согласия Google Analytics получает данные об использовании и устройстве и может сохранять файлы cookie аналитики. Хранение рекламных данных отключено.' : 'Your map progress, notes, and markers stay on this device. If you agree, Google Analytics receives usage and device data and may set analytics cookies. Advertising storage stays disabled.'}{' '}
               <a
                 href="https://business.safety.google/privacy/"
                 target="_blank"
                 rel="noreferrer"
               >
-                How Google uses data
+                {ru ? 'Как Google использует данные' : 'How Google uses data'}
               </a>
-              . You can change your choice later in Analytics settings.
+              {ru ? '. Изменить выбор можно в настройках аналитики.' : '. You can change your choice later in Analytics settings.'}
             </p>
           </div>
           <div className="analytics-consent-banner__actions">
             <button type="button" onClick={() => chooseConsent('denied')}>
-              Reject
+              {ru ? 'Отклонить' : 'Reject'}
             </button>
             <button type="button" onClick={() => chooseConsent('granted')}>
-              Accept analytics
+              {ru ? 'Разрешить аналитику' : 'Accept analytics'}
             </button>
           </div>
         </aside>
@@ -160,7 +161,7 @@ export function AnalyticsConsentBanner({ showSettings = true }: AnalyticsConsent
             setIsOpen(true);
           }}
         >
-          Analytics settings
+          {ru ? 'Настройки аналитики' : 'Analytics settings'}
         </button>
       ) : null}
     </>

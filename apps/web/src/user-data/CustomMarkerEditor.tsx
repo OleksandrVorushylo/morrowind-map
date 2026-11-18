@@ -5,7 +5,7 @@ import {
   type FormEvent,
   type Ref,
 } from 'react';
-import type { CustomMarkerRecord, Locale } from '@morrowind-map/contracts';
+import type { CustomMarkerRecord } from '@morrowind-map/contracts';
 import {
   userDatabase,
   type MorrowindMapDatabase,
@@ -36,7 +36,7 @@ type MarkerOperation =
 
 export interface CustomMarkerEditorProps {
   readonly marker: CustomMarkerRecord;
-  readonly locale: Locale;
+  readonly locale: 'en' | 'ru';
   readonly database?: MorrowindMapDatabase;
   readonly disabled?: boolean;
   readonly inputRef?: Ref<HTMLInputElement>;

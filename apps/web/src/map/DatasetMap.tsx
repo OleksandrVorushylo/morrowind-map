@@ -87,6 +87,7 @@ import {
   type MarkerKind,
 } from '../ui/markerSemantics';
 import { CurrentBasemapLoadWindow } from './currentBasemapLoadWindow';
+import { syncPlaceLabelViews } from './placeLabelViews';
 import {
   BASEMAP_BRIGHTNESS_FACTOR,
   BASEMAP_CONTRAST_FACTOR,
@@ -212,8 +213,8 @@ function createPlaceLabelStyle(
     text: new Text({
       text: name,
       font: emphasized || searchMatch
-        ? '600 10px "Atkinson Hyperlegible Next Variable", Arial, sans-serif'
-        : '500 10px "Atkinson Hyperlegible Next Variable", Arial, sans-serif',
+        ? '700 10px "Atkinson Hyperlegible Next Variable", Arial, sans-serif'
+        : '600 10px "Atkinson Hyperlegible Next Variable", Arial, sans-serif',
       offsetY: -11,
       padding: hovered ? [3, 5, 3, 5] : [1, 2, 1, 2],
       backgroundFill: hovered ? new Fill({ color: 'rgba(23, 19, 13, 0.7)' }) : undefined,
@@ -236,7 +237,12 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown dataset error';
 }
 
-function regionTitle(dataset: DatasetManifest, regionId: string): string {
+function regionTitle(dataset: DatasetManifest, regionId: string, russian = false): string {
+  if (russian && regionId === 'vvardenfell') return 'Вварденфелл';
+  if (russian && regionId === 'solstheim') return 'Солстхейм';
+  if (russian && regionId === 'tr-mainland') return 'Материк Морровинда';
+  if (russian && regionId === 'cyrodiil') return 'Сиродил';
+  if (russian && regionId === 'skyrim') return 'Скайрим';
   const region = dataset.regions.find(({ id }) => id === regionId);
   return region?.title.en ?? regionId;
 }
@@ -436,7 +442,7 @@ export function DatasetMap({
           ) : loadState.status === 'missing' || loadState.status === 'invalid' ? (
             <>
               <span className="load-state-code">
-                {loadState.status === 'missing' ? 'DATA MISSING' : 'DATA INVALID'}
+                {loadState.status === 'missing' ? t('map.dataMissing') : t('map.dataInvalid')}
               </span>
               <h2>
                 {loadState.status === 'missing' ? t('map.missingData') : t('map.invalidData')}
@@ -446,7 +452,7 @@ export function DatasetMap({
             </>
           ) : (
             <>
-              <span className="load-state-code">DATA ERROR</span>
+              <span className="load-state-code">{t('map.dataError')}</span>
               <h2>{t('map.loadError')}</h2>
               <p>{loadState.message}</p>
               {loadState.retrying && loadIsSlow ? <p>{t('map.retrySlow')}</p> : null}
@@ -490,18 +496,18 @@ export function MapTitlebar({ dataset, onBack, tools }: MapTitlebarProps) {
     : presentation.title;
   return (
     <header className="window-titlebar map-titlebar">
-      <button className="back-button" type="button" onClick={onBack}>
+      <button className="back-button" type="button" onClick={onBack} aria-label={t('map.versions')}>
         <PixelIcon name="back" />
-        {t('map.versions')}
+        <span className="back-button-label">{t('map.versions')}</span>
       </button>
       <div className="map-title-copy">
-        <h1 id="map-title">
+        <h1 id="map-title" title={title}>
           {presentation.modUrl ? (
             <a
               href={presentation.modUrl}
               target="_blank"
               rel="noopener noreferrer"
-              title="View mod on Nexus Mods (opens in a new tab)"
+              title={t('map.modLink')}
             >
               {title}
             </a>
@@ -528,8 +534,27 @@ function DatasetMapReady({
   onNavigationChange,
   onBack,
 }: DatasetMapReadyProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale: Locale = 'en';
+  const russian = i18n.resolvedLanguage === 'ru';
+  const [localNames, setLocalNames] = useState<Readonly<Record<string, string>>>({});
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch(`/local-localization/${encodeURIComponent(dataset.datasetId)}.json`, { signal: controller.signal })
+      .then((response) => response.ok ? response.json() as Promise<unknown> : null)
+      .then((value) => {
+        if (!value || typeof value !== 'object' || controller.signal.aborted) return;
+        const overlay = value as { datasetId?: unknown; snapshotId?: unknown; names?: unknown };
+        if (overlay.datasetId !== dataset.datasetId || overlay.snapshotId !== dataset.snapshotId ||
+          !overlay.names || typeof overlay.names !== 'object' || Array.isArray(overlay.names)) return;
+        const names = Object.fromEntries(Object.entries(overlay.names).filter(
+          ([, name]) => typeof name === 'string' && name.length > 0 && name.length <= 500,
+        )) as Record<string, string>;
+        setLocalNames(names);
+      }).catch(() => undefined);
+    return () => controller.abort();
+  }, [dataset.datasetId, dataset.snapshotId]);
+  const [searchCollapsed, setSearchCollapsed] = useState(true);
   const [colorblind, setColorblind] = useState(readColorblindPreference);
   const colorblindRef = useRef(colorblind);
   const targetRef = useRef<HTMLDivElement>(null);
@@ -543,6 +568,7 @@ function DatasetMapReady({
   const basemapRetryButtonRef = useRef<HTMLButtonElement>(null);
   const markerLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const labelLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+  const placeLabelViewsRef = useRef<ReadonlyMap<string, PlaceView>>(new globalThis.Map());
   const focusedLabelLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const customMarkerLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const focusedCustomLabelLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
@@ -641,13 +667,29 @@ function DatasetMapReady({
       .map(({ id }) => id);
   }, [bundle.locations.places, dataset.mapKey, dataset.regions]);
 
-  const places = useMemo(
-    () =>
-      buildPlaceViews(bundle.locations.places, [...bundle.locales.values()], locale).sort(
-        (left, right) => left.name.localeCompare(right.name, locale),
-      ),
+  const basePlaces = useMemo(
+    () => buildPlaceViews(bundle.locations.places, [...bundle.locales.values()], locale),
     [bundle, locale],
   );
+  const places = useMemo(() => basePlaces.map((view) => {
+    const candidate = localNames[view.id];
+    const translated = view.place.regionId === 'solstheim' && candidate?.startsWith('Солстхейм, ')
+      ? candidate.slice('Солстхейм, '.length)
+      : candidate;
+    if (!translated) return view;
+    return russian
+      ? { ...view, name: translated, aliases: [...view.aliases, view.name] }
+      : { ...view, aliases: [...view.aliases, translated] };
+  }).sort((left, right) => left.name.localeCompare(right.name, russian ? 'ru' : 'en')),
+  [basePlaces, localNames, russian]);
+  useEffect(() => {
+    const views = new globalThis.Map(places.map((place) => [place.id, place] as const));
+    placeLabelViewsRef.current = views;
+    const source = labelLayerRef.current?.getSource();
+    if (source) syncPlaceLabelViews(source, views);
+    labelLayerRef.current?.changed();
+    focusedLabelLayerRef.current?.changed();
+  }, [places]);
   const primaryPyramid = bundle.mapAssets.tilePyramids?.[0];
   const viewResolutions = useMemo(
     () => primaryPyramid ? createOverscaledViewResolutions(primaryPyramid) : undefined,
@@ -657,8 +699,8 @@ function DatasetMapReady({
   const maximumZoom = viewResolutions ? viewResolutions.length - 1 : 12;
   const availableTypes = useMemo(() => getAvailablePlaceTypes(places), [places]);
   const visibilityZoomThresholds = useMemo(
-    () => [...new Set(places.map(({ place }) => place.minZoom))].sort((left, right) => left - right),
-    [places],
+    () => [...new Set(basePlaces.map(({ place }) => place.minZoom))].sort((left, right) => left - right),
+    [basePlaces],
   );
   const availablePlaceTypeSet = useMemo(
     () => new Set<PlaceType>(availableTypes),
@@ -989,7 +1031,8 @@ function DatasetMapReady({
         return;
       }
       event.preventDefault();
-      searchRef.current?.focus();
+      setSearchCollapsed(false);
+      window.requestAnimationFrame(() => searchRef.current?.focus());
     };
     window.addEventListener('keydown', focusSearch);
     return () => window.removeEventListener('keydown', focusSearch);
@@ -1045,8 +1088,8 @@ function DatasetMapReady({
     }
     let cancelled = false;
     void Promise.all([
-      document.fonts.load('500 12px "Atkinson Hyperlegible Next Variable"'),
       document.fonts.load('600 12px "Atkinson Hyperlegible Next Variable"'),
+      document.fonts.load('700 12px "Atkinson Hyperlegible Next Variable"'),
     ]).then(() => {
       if (cancelled) {
         return;
@@ -1164,7 +1207,7 @@ function DatasetMapReady({
       setFailedMarkerPosition([position[0], position[1]]);
       void saveCustomMarker(userDatabase, {
         datasetId: dataset.datasetId,
-        label: 'Personal marker',
+        label: i18n.t('map.personalMarker'),
         note: '',
         position,
         })
@@ -1188,6 +1231,7 @@ function DatasetMapReady({
     },
     [
       dataset.datasetId,
+      i18n,
       commitNavigation,
       customMarkerCardFocus,
       setMarkerError,
@@ -1292,7 +1336,7 @@ function DatasetMapReady({
         publishBasemapState();
       }),
     ]);
-    const orderedPlaces = [...places].sort((left, right) =>
+    const orderedPlaces = [...basePlaces].sort((left, right) =>
       left.id < right.id ? -1 : left.id > right.id ? 1 : 0
     );
     const markerFeatures = orderedPlaces.map(
@@ -1329,7 +1373,7 @@ function DatasetMapReady({
         new Feature({
           geometry: new Point([...place.place.mapPosition]),
           placeId: place.id,
-          placeView: place,
+          placeView: placeLabelViewsRef.current.get(place.id) ?? place,
         }),
     );
     const labelLayer = new VectorLayer({
@@ -1455,7 +1499,7 @@ function DatasetMapReady({
     const initialNavigation = initialNavigationRef.current;
     const initialPlace = initialNavigation.placeId === null
       ? null
-      : places.find(({ id }) => id === initialNavigation.placeId) ?? null;
+      : basePlaces.find(({ id }) => id === initialNavigation.placeId) ?? null;
     const initialRegionView = initialNavigation.view === null && initialPlace === null
       ? regionNavigationView(
           dataset,
@@ -1783,7 +1827,7 @@ function DatasetMapReady({
     extent,
     maximumZoom,
     minimumZoom,
-    places,
+    basePlaces,
     placeCardFocus,
     projectionDescriptor.cellSize,
     visibilityZoomThresholds,
@@ -2265,7 +2309,7 @@ function DatasetMapReady({
               datasetId={dataset.datasetId}
               datasetSnapshots={datasetSnapshots}
               knownPlaceIds={knownPlaceIds}
-              locale={locale}
+              locale={russian ? 'ru' : 'en'}
               mode={bindingState.status === 'conflict' ? 'conflict-export-only' : 'read-write'}
               disabled={bindingState.status !== 'conflict' && userDataDisabled}
               variant="compact"
@@ -2274,8 +2318,18 @@ function DatasetMapReady({
         )}
       />
 
-      <section className="dataset-workspace">
-        <aside className="map-ledger" aria-label={t('map.searchLabel')}>
+      <section className={`dataset-workspace${searchCollapsed ? ' dataset-workspace--search-collapsed' : ''}`}>
+        <aside className={`map-ledger${searchCollapsed ? ' map-ledger--collapsed' : ''}`} aria-label={t('map.searchLabel')}>
+          <button
+            type="button"
+            className="mobile-search-toggle"
+            aria-expanded={!searchCollapsed}
+            aria-controls="map-search-content"
+            onClick={() => setSearchCollapsed((collapsed) => !collapsed)}
+          >
+            <span>{t('map.searchLabel')}</span>
+            <span className="mobile-search-toggle__chevron" aria-hidden="true" />
+          </button>
           {bindingState.status === 'conflict' ? (
             <div className="user-data-state user-data-state--error" role="alert">
               <strong>{t('map.localDataConflict')}</strong>
@@ -2307,6 +2361,7 @@ function DatasetMapReady({
             </p>
           ) : null}
 
+          <div id="map-search-content" className="map-ledger-content">
           <label className="place-search">
             <span>{t('map.searchLabel')}</span>
             <span className="search-field">
@@ -2333,7 +2388,7 @@ function DatasetMapReady({
                 >
                   {regionId === 'all'
                     ? t('map.allRegions')
-                    : regionTitle(dataset, regionId)}
+                    : regionTitle(dataset, regionId, russian)}
                 </button>
               ))}
             </fieldset>
@@ -2377,7 +2432,7 @@ function DatasetMapReady({
                       <strong>{place.name}</strong>
                       <small>
                         {t(`placeType.${place.place.type}`)} ·{' '}
-                        {regionTitle(dataset, place.place.regionId)}
+                        {regionTitle(dataset, place.place.regionId, russian)}
                       </small>
                     </span>
                   </button>
@@ -2428,6 +2483,7 @@ function DatasetMapReady({
               />
             ) : null}
           </div>
+          </div>
         </aside>
 
         <div className="dataset-map-stage">
@@ -2475,7 +2531,7 @@ function DatasetMapReady({
           />
 
           <p id="map-keyboard-instructions" className="visually-hidden">
-            Use arrow keys to pan the map and plus or minus to zoom. Press M to open the next personal marker.
+            {t('map.keyboardInstructions')}
           </p>
 
           <div className="map-tools" role="group" aria-label={t('map.controls')}>
@@ -2497,7 +2553,7 @@ function DatasetMapReady({
             </button>
           </div>
 
-          <div className="marker-legend" role="group" aria-label="Marker legend">
+          <div className="marker-legend" role="group" aria-label={t('map.markerLegend')}>
             <span><StatusMark kind="unvisited" />{t('map.unvisited')}</span>
             <span><StatusMark kind="active" />{t('map.active')}</span>
             <span><StatusMark kind="visited" />{t('map.visited')}</span>
@@ -2565,9 +2621,9 @@ function DatasetMapReady({
             <PlaceCard
               cardRef={placeCardRef}
               datasetId={dataset.datasetId}
-              wikiUrl={placeWikiUrl(dataset.mapKey, selectedPlace.place.regionId, selectedPlace.name, selectedPlace.id)}
+              wikiUrl={placeWikiUrl(dataset.mapKey, selectedPlace.place.regionId, basePlaces.find(({ id }) => id === selectedPlace.id)?.name ?? selectedPlace.name, selectedPlace.id)}
               place={selectedPlace}
-              locale={locale}
+              locale={russian ? 'ru' : 'en'}
               progress={progress.byPlaceId.get(selectedPlace.id)}
               disabled={userDataDisabled}
               onClose={closeSelectedPlace}
@@ -2590,7 +2646,7 @@ function DatasetMapReady({
           {selectedMarker ? (
             <CustomMarkerCard
               marker={selectedMarker}
-              locale={locale}
+              locale={russian ? 'ru' : 'en'}
               inputRef={customMarkerEditorInputRef}
               disabled={userDataDisabled}
               onClose={closeSelectedCustomMarker}
@@ -2609,7 +2665,7 @@ interface PlaceCardProps {
   readonly datasetId: string;
   readonly wikiUrl: string | null;
   readonly place: PlaceView;
-  readonly locale: Locale;
+  readonly locale: 'en' | 'ru';
   readonly progress: ProgressRecord | undefined;
   readonly disabled: boolean;
   readonly onClose: () => void;
@@ -2714,7 +2770,7 @@ function PlaceCard({
 
 interface CustomMarkerCardProps {
   readonly marker: CustomMarkerRecord;
-  readonly locale: Locale;
+  readonly locale: 'en' | 'ru';
   readonly inputRef: Ref<HTMLInputElement>;
   readonly disabled: boolean;
   readonly onClose: () => void;

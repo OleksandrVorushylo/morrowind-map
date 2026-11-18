@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DatasetManifest } from '@morrowind-map/contracts';
 import { AnalyticsConsentBanner } from './analytics/AnalyticsConsent';
@@ -77,7 +78,24 @@ function landingBackdropDataset(
     null;
 }
 
+function LanguageSelector() {
+  const { i18n } = useTranslation();
+  return (
+    <div className="language-selector" role="group" aria-label="Language / Язык">
+      {(['en', 'ru'] as const).map((language) => (
+        <button key={language} type="button" lang={language} aria-pressed={i18n.resolvedLanguage === language}
+          onClick={() => { void i18n.changeLanguage(language); }}>
+          {language.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function App() {
+  const { i18n } = useTranslation();
+  const ru = i18n.resolvedLanguage === 'ru';
+  const label = (en: string, russian: string) => ru ? russian : en;
   const [loadState, setLoadState] = useState<LoadState>({ status: 'loading' });
   const [navigationState, setNavigationState] = useState<MapUrlState>(() =>
     readMapUrl(new URL(window.location.href)),
@@ -283,6 +301,7 @@ export function App() {
 
   return (
     <>
+      <LanguageSelector />
       <main className="landing-screen">
       <LandingMapBackdrop
         key={backdropDataset === null
@@ -299,21 +318,21 @@ export function App() {
           ref={landingHeadingRef}
           tabIndex={-1}
         >
-          Choose your world
+          {label('Choose your world', 'Выберите свой мир')}
         </h1>
 
         {loadState.status === 'loading' ? (
           <div className="load-panel" role="status">
             <span className="load-indicator" aria-hidden="true" />
             {loadIsSlow
-              ? 'Reading manifests… This is taking longer than usual.'
-              : 'Reading manifests…'}
+              ? label('Reading manifests… This is taking longer than usual.', 'Чтение описаний карт занимает больше времени…')
+              : label('Reading manifests…', 'Чтение описаний карт…')}
           </div>
         ) : null}
 
         {loadState.status === 'error' ? (
           <div className="error-panel" role="alert" aria-busy={loadState.retrying}>
-            <span>DATA ERROR</span>
+            <span>{label('DATA ERROR', 'ОШИБКА ДАННЫХ')}</span>
             <p>{loadState.message}</p>
             <button
               ref={retryButtonRef}
@@ -321,7 +340,7 @@ export function App() {
               disabled={loadState.retrying}
               onClick={retryDatasets}
             >
-              {loadState.retrying ? 'Retrying…' : 'Retry'}
+              {loadState.retrying ? label('Retrying…', 'Повторяем…') : label('Retry', 'Повторить')}
             </button>
           </div>
         ) : null}
@@ -334,14 +353,14 @@ export function App() {
                 role="alert"
                 aria-busy={loadState.retrying}
               >
-                <span>PARTIAL CATALOG</span>
+                <span>{label('PARTIAL CATALOG', 'НЕПОЛНЫЙ КАТАЛОГ')}</span>
                 <p>
                   {loadState.issues.length === 1
-                    ? 'One map manifest is unavailable. The available map remains usable.'
-                    : `${loadState.issues.length} map manifests are unavailable. Available maps remain usable.`}
+                    ? label('One map manifest is unavailable. The available map remains usable.', 'Описание одной карты недоступно. Остальными картами можно пользоваться.')
+                    : label(`${loadState.issues.length} map manifests are unavailable. Available maps remain usable.`, `Недоступно описаний карт: ${loadState.issues.length}. Остальными картами можно пользоваться.`)}
                 </p>
                 {loadState.retrying && loadIsSlow ? (
-                  <p>The manifest retry is still in progress.</p>
+                  <p>{label('The manifest retry is still in progress.', 'Повторная загрузка ещё выполняется.')}</p>
                 ) : null}
                 <ul>
                   {loadState.issues.map((issue) => (
@@ -356,11 +375,11 @@ export function App() {
                   disabled={loadState.retrying}
                   onClick={retryDatasets}
                 >
-                  {loadState.retrying ? 'Retrying…' : 'Retry unavailable maps'}
+                  {loadState.retrying ? label('Retrying…', 'Повторяем…') : label('Retry unavailable maps', 'Повторить загрузку карт')}
                 </button>
               </div>
             ) : null}
-            <section className="landing-choice-list" aria-label="Available maps">
+            <section className="landing-choice-list" aria-label={label('Available maps', 'Доступные карты')}>
               {availableChoices.map((dataset) => {
                 const presentation = presentDataset(dataset);
 
@@ -395,7 +414,7 @@ export function App() {
                         'push',
                       );
                     }}
-                    aria-label={`Open map: ${presentation.title}`}
+                    aria-label={`${label('Open map', 'Открыть карту')}: ${presentation.title}`}
                   >
                     <span className="dataset-choice__title">{presentation.title}</span>
                     <span className="dataset-choice__arrow" aria-hidden="true">→</span>
@@ -407,18 +426,15 @@ export function App() {
         ) : null}
       </section>
       <section className="landing-about" aria-labelledby="landing-about-heading">
-        <h2 id="landing-about-heading">Interactive maps for The Elder Scrolls III: Morrowind</h2>
+        <h2 id="landing-about-heading">{label('Interactive maps for The Elder Scrolls III: Morrowind', 'Интерактивные карты The Elder Scrolls III: Morrowind')}</h2>
         <p>
-          Explore detailed maps, mark places as visited, and add your own markers and notes
-          {' '}— on desktop or phone.
+          {label('Explore detailed maps, mark places as visited, and add your own markers and notes — on desktop or phone.', 'Изучайте подробные карты, отмечайте посещённые места и добавляйте свои метки и заметки — на компьютере или телефоне.')}
         </p>
         <p>
-          Discover high-resolution maps of Morrowind Game of the Year, Tamriel Rebuilt
-          {' '}— Poison Song, Project Cyrodiil — Abecean Shores, Skyrim: Home of the Nords
-          {' '}— Dragonstar, and Lyithdonea — The Azurian Isles.
+          {label('Discover high-resolution maps of Morrowind Game of the Year, Tamriel Rebuilt — Poison Song, Project Cyrodiil — Abecean Shores, Skyrim: Home of the Nords — Dragonstar, and Lyithdonea — The Azurian Isles.', 'Откройте карты Morrowind Game of the Year, Tamriel Rebuilt — Poison Song, Project Cyrodiil — Abecean Shores, Skyrim: Home of the Nords — Dragonstar и Lyithdonea — The Azurian Isles в высоком разрешении.')}
         </p>
         <p>
-          Search for towns, caves, ruins, and dungeon entrances, and find your next destination.
+          {label('Search for towns, caves, ruins, and dungeon entrances, and find your next destination.', 'Ищите города, пещеры, руины и входы в подземелья и выбирайте следующую цель путешествия.')}
         </p>
       </section>
       </div>

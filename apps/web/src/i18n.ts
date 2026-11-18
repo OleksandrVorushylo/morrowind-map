@@ -6,6 +6,9 @@ const resources = {
     translation: {
       map: {
         versions: 'Back to maps',
+        dataMissing: 'DATA MISSING', dataInvalid: 'DATA INVALID', dataError: 'DATA ERROR',
+        modLink: 'View mod on Nexus Mods (opens in a new tab)', markerLegend: 'Marker legend',
+        keyboardInstructions: 'Use arrow keys to pan the map and plus or minus to zoom. Press M to open the next personal marker.',
         loading: 'Opening the map dataset…',
         loadingSlow: 'Opening the map dataset… The catalog is taking longer than usual.',
         loadError: 'The map dataset could not be opened',
@@ -85,14 +88,79 @@ const resources = {
       },
     },
   },
+  ru: {
+    translation: {
+      map: {
+        versions: 'К выбору карты', dataMissing: 'ДАННЫЕ ОТСУТСТВУЮТ', dataInvalid: 'ОШИБКА ДАННЫХ', dataError: 'ОШИБКА ДАННЫХ',
+        modLink: 'Открыть мод на Nexus Mods в новой вкладке', markerLegend: 'Обозначения меток',
+        keyboardInstructions: 'Используйте стрелки для перемещения по карте, плюс и минус для изменения масштаба. Нажмите M, чтобы открыть следующую личную метку.',
+        loading: 'Открываем карту…',
+        loadingSlow: 'Открываем карту… Загрузка каталога занимает больше времени.',
+        loadError: 'Не удалось открыть данные карты', missingData: 'Эта карта ещё не установлена локально',
+        invalidData: 'Данные карты содержат ошибки', retry: 'Повторить', retrying: 'Повторяем…',
+        retrySlow: 'Повторная загрузка продолжается. Ссылка и положение карты сохранены.',
+        searchLabel: 'Найти место', searchPlaceholder: 'Балмора, гробница, гильдия…',
+        regions: 'Часть карты', allRegions: 'Все', filters: 'Фильтры', filterSummaryOne: '1 активен',
+        filterSummaryMany: 'Активно: {{active}}', typeFilters: 'Типы мест', statusFilters: 'Статус посещения',
+        resetFilters: 'Сбросить фильтры', allTypes: 'Все типы', allStatuses: 'Все статусы',
+        vvardenfell: 'Вварденфелл', solstheim: 'Солстхейм', noResults: 'Места не найдены.',
+        clearSearch: 'Очистить поиск', noFilteredPlaces: 'Нет мест, соответствующих фильтрам. Сбросьте фильтры.',
+        noExteriorContent: 'В этом наборе нет мест на открытой карте. Выберите другую версию.',
+        noPlacesAtZoom: 'На этом масштабе места не видны. Увеличьте карту.',
+        progressFilterUnavailable: 'Фильтры прогресса недоступны до восстановления локальных данных.',
+        mapAria: 'Интерактивная карта в координатах мира TES3', basemapError: 'Не удалось загрузить фрагменты карты: {{count}}',
+        basemapPartialError: 'Не удалось загрузить некоторые фрагменты карты: {{count}}. Загруженные области доступны.',
+        basemapFullError: 'Не удалось загрузить фрагменты видимой области: {{count}}.',
+        retryFailedTiles: 'Повторить загрузку', basemapMissing: 'В этой точке и на этом масштабе нет фрагмента карты.',
+        zoomIn: 'Увеличить', zoomOut: 'Уменьшить', controls: 'Управление картой',
+        unvisited: 'Не посещено', active: 'В процессе', visited: 'Посещено', personalMarker: 'Личная метка',
+        addMarker: 'Добавить личную метку', cancelMarker: 'Отменить размещение метки',
+        placeMarkerHint: 'Нажмите на карту или выберите её и нажмите Enter, чтобы поставить метку',
+        retryMarker: 'Повторить', localDataLoading: 'Открываем журнал прогресса…',
+        localDataError: 'Локальный прогресс недоступен', localDataReadOnly: 'Карта доступна только для чтения. Ваши записи не изменены.',
+        localDataConflict: 'Локальный прогресс относится к другой версии карты',
+        localDataPreserved: 'Ваши записи сохранены. Экспортируйте их или выберите другую карту.',
+        markerLabel: 'Название метки', markerNote: 'Заметка к метке', saveMarker: 'Сохранить метку',
+        deleteMarker: 'Удалить метку', closeMarker: 'Закрыть карточку метки', closeCard: 'Закрыть карточку места',
+        copyPlaceLink: 'Копировать ссылку на место', placeLinkCopied: 'Ссылка скопирована.',
+        placeLinkCopyFailed: 'Не удалось скопировать ссылку. Попробуйте ещё раз.', zoom: 'Масштаб карты',
+      },
+      placeType: {
+        settlement: 'Поселение', guild: 'Гильдия', temple: 'Храм', cave: 'Пещера', mine: 'Шахта',
+        ship: 'Корабль', shrine: 'Святилище', 'ancestral-tomb': 'Родовая гробница', stronghold: 'Крепость',
+        'dwemer-ruin': 'Двемерские руины', house: 'Дом', shop: 'Магазин', landmark: 'Ориентир', other: 'Другое',
+      },
+    },
+  },
 } as const;
+
+function initialLanguage(): 'ru' | 'en' {
+  try {
+    const saved = localStorage.getItem('morrowind-map:language');
+    if (saved === 'ru' || saved === 'en') return saved;
+  } catch {
+    return navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+  }
+  return navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+}
 
 void i18n.use(initReactI18next).init({
   resources,
-  lng: 'en',
+  lng: initialLanguage(),
   fallbackLng: 'en',
-  supportedLngs: ['en'],
+  supportedLngs: ['en', 'ru'],
   interpolation: { escapeValue: false },
+});
+
+document.documentElement.lang = i18n.resolvedLanguage ?? i18n.language;
+
+i18n.on('languageChanged', (language) => {
+  document.documentElement.lang = language;
+  try {
+    localStorage.setItem('morrowind-map:language', language);
+  } catch {
+    return;
+  }
 });
 
 export { i18n };

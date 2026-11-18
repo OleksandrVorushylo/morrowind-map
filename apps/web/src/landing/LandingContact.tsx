@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useRef, useState } from 'react';
 import { createFocusReturnController } from '../ui/focusManagement';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -5,6 +6,8 @@ import { PixelIcon } from '../ui/PixelIcon';
 const CONTACT_PANEL_ID = 'landing-contact-panel';
 
 export function LandingContact() {
+  const { i18n } = useTranslation();
+  const ru = i18n.resolvedLanguage === 'ru';
   const [isOpen, setIsOpen] = useState(false);
   const [focusReturn] = useState(createFocusReturnController);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -27,7 +30,7 @@ export function LandingContact() {
         ref={triggerRef}
         className="landing-contact-trigger"
         type="button"
-        aria-label="Contact information"
+        aria-label={ru ? 'Контактная информация' : 'Contact information'}
         aria-controls={CONTACT_PANEL_ID}
         aria-expanded={isOpen}
         onClick={open}
@@ -53,13 +56,13 @@ export function LandingContact() {
           <button
             className="landing-contact-panel__close"
             type="button"
-            aria-label="Close contact information"
+            aria-label={ru ? 'Закрыть контактную информацию' : 'Close contact information'}
             onClick={close}
           >
             <PixelIcon name="close" />
           </button>
           <h2 id="landing-contact-title" className="visually-hidden">
-            Contact information
+            {ru ? 'Контактная информация' : 'Contact information'}
           </h2>
           <div className="landing-contact-panel__links">
             <a

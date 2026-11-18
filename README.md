@@ -1,38 +1,48 @@
-# Morrowind Map
+# Morrowind Map — русская локализация
 
-Five interactive maps for The Elder Scrolls III: Morrowind, available at [morrowindmap.com](https://morrowindmap.com/).
+Это личная русская адаптация [Morrowind Map](https://github.com/omggga/morrowind-map) — интерактивной карты для The Elder Scrolls III: Morrowind и крупных модификаций. Оригинальная версия доступна на [morrowindmap.com](https://morrowindmap.com/).
 
-| Map | Coverage |
+Я сделал этот перевод для себя и своей игры, используя в качестве основного источника названий русскую локализацию **Morrowind Fullrest Repack 5.0**. Если вам тоже удобнее пользоваться картой на русском, можете взять эту адаптацию для личного некоммерческого использования с соблюдением лицензий проекта и прав авторов используемых материалов.
+
+Большое спасибо авторам оригинальной Morrowind Map за проект, а также команде Fullrest и всем авторам переводов и модификаций, благодаря которым существует русскоязычный Морровинд.
+
+## Что изменено
+
+- Добавлены русский и английский языки интерфейса с переключением без перезагрузки. При первом запуске выбирается язык браузера, затем запоминается выбор пользователя.
+- Названия мест отображаются по-русски в списке, карточках и на карте. Поиск поддерживает русские и английские варианты.
+- Добавлены русские подписи и элементы управления транспортом, где для них доступны переводы.
+- Для мобильных экранов поиск сделан сворачиваемым, а шапка карты — компактнее.
+
+Названия оригинального Morrowind в основном сопоставлены с локализацией MFR. Установленные версии модификаций MFR отличаются от версий, используемых картой: где надёжного совпадения не нашлось, добавлены предварительные переводы и приблизительная транслитерация. Такие названия могут отличаться от будущих переводов и нуждаются в проверке. Lyithdonea пока не переведена: я ещё не играл с этой модификацией.
+
+> Готовые каталоги русских названий четырёх карт находятся в `apps/web/public/local-localization/` и включены в репозиторий. После клонирования они доступны автоматически; установленная игра для работы перевода не требуется. Исходные игровые файлы, копии MFR, инструменты обработки и рабочие отчёты в репозиторий не входят.
+
+## Карты
+
+| Карта | Содержимое |
 | --- | --- |
-| Original GOTY HD | Vvardenfell and Solstheim from Morrowind, Tribunal, and Bloodmoon |
-| Tamriel Rebuilt | The base game and TR Mainland; currently Poison Song 26.08.23 |
+| Original GOTY HD | Вварденфелл и Солстхейм из Morrowind, Tribunal и Bloodmoon |
+| Tamriel Rebuilt | Базовая игра и материк TR; версия Poison Song 26.08.23 |
 | Project Cyrodiil | Abecean Shores 26.09 |
-| Skyrim: Home of the Nords | Dragonstar 26.09; the Reach, including Dragonstar, Karthwasten and Karthgad |
-| Lyithdonea | The Azurian Isles 0.3.1 |
+| Skyrim: Home of the Nords | Dragonstar 26.09; Предел, включая Dragonstar, Karthwasten и Karthgad |
+| Lyithdonea | The Azurian Isles 0.3.1; русская локализация не добавлялась |
 
-Search places, filter locations, share map links, and keep progress, notes, and personal markers. Mod map headers show the loaded release version and link to their Nexus Mods pages in a new tab. Personal data stays in your browser; use JSON export/import to transfer it or keep a backup. Records are associated with a specific map version.
+На карте можно искать и фильтровать места, делиться ссылками, отмечать посещённые локации, добавлять заметки и личные метки. Данные прогресса хранятся в браузере и привязаны к версии карты. Для переноса или резервной копии используйте экспорт и импорт JSON.
 
-## Requirements
+## Требования
 
-Local development, dataset preparation, and builds currently require a Unix-like
-environment: Linux or macOS with a POSIX-compatible shell. CI runs on Linux.
+Для локальной разработки, подготовки данных и сборки необходима Unix-подобная система: Linux или macOS с POSIX-совместимой оболочкой. В CI используется Linux.
 
-- Node.js `^20.19.0` or `>=22.12.0` (CI uses Node.js 24).
+- Node.js `^20.19.0` или `>=22.12.0` (в CI используется Node.js 24).
 - pnpm `11.19.0`.
-- Python 3.10+ available as `python3` in the same shell as `node` and `pnpm`.
-- Network access for dependencies and map archives, plus disk space for about
-  2.8 GB of extracted maps, downloaded archives, and a separate production build.
+- Python 3.10 или новее, доступный как `python3` в той же оболочке, что и `node` и `pnpm`.
+- Доступ к сети для загрузки зависимостей и архивов карт. Для распакованных карт потребуется около 2,8 ГБ; дополнительное место нужно для архивов и отдельной сборки приложения.
 
-**Native Windows build support is in development and is not currently available.**
-The commands below assume a Unix environment; the dataset tools use Unix-only
-Python file locking (`fcntl`). Installing Git Bash alone does not provide this
-Python support. These restrictions apply to local tooling; the hosted website
-can be used from a Windows browser.
+**Нативная сборка в Windows пока не поддерживается.** Инструменты подготовки данных используют блокировку файлов Python через `fcntl`, доступную в Unix-подобных системах; одной установки Git Bash недостаточно. Это ограничение относится к локальным инструментам, а готовым сайтом можно пользоваться в браузере Windows.
 
-## Run locally
+## Локальный запуск
 
-After installing the requirements above, run these commands from your clone or
-extracted source ZIP:
+После установки необходимых инструментов выполните в каталоге проекта:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -40,67 +50,61 @@ pnpm datasets:download
 pnpm dev
 ```
 
-Open `http://127.0.0.1:5173`. The downloader restores all five maps, approximately 2.8 GB of ready tiles, from the immutable product release selected by `config/dataset-releases.lock.json`. It uses the Python standard library; no Git LFS, game installation, Docker, or OpenMW is needed. `pnpm dev` does not download missing maps.
+Откройте [http://127.0.0.1:5173](http://127.0.0.1:5173). Загрузчик восстанавливает пять подготовленных карт из закреплённого релиза, указанного в `config/dataset-releases.lock.json`. Для этого достаточно стандартной библиотеки Python: Git LFS, установленная игра, Docker и OpenMW не требуются. Команда `pnpm dev` сама недостающие карты не загружает.
 
-Public releases can be downloaded without a GitHub account, token, or `gh`: use `pnpm datasets:download --anonymous` to explicitly disable credential lookup. Downloads verify hashes, reuse complete maps and cached archives, and can safely be retried; `--discard-cache` removes verified archives after extraction to save disk space.
+Публичные релизы можно загружать без учётной записи GitHub, токена и `gh`: команда `pnpm datasets:download --anonymous` отключает поиск учётных данных. Загрузчик проверяет хеши, повторно использует готовые карты и кэшированные архивы. Загрузку можно безопасно повторить; параметр `--discard-cache` удаляет проверенные архивы после распаковки.
 
-For a private repository or private source release, authenticate with an existing `gh auth login` session or provide `GH_TOKEN` / `GITHUB_TOKEN` in the environment with repository Contents read access. Anonymous access works only when the source repository and release are public. Do not put tokens in commands or files.
+Для приватного репозитория или релиза используйте существующую сессию `gh auth login` либо переменные окружения `GH_TOKEN` / `GITHUB_TOKEN` с доступом к содержимому репозитория. Не сохраняйте токены в командах и файлах.
 
-## Build
+## Сборка
 
 ```bash
 pnpm build
 pnpm preview
 ```
 
-The static application is written to `apps/web/dist`. Keep its `datasets/` directory and assets together when serving the build. Run `pnpm datasets:download` before building to include the complete prepared maps. Hosting configuration is up to you.
+Готовое статическое приложение находится в `apps/web/dist`. При размещении сборки сохраняйте вместе с ней каталог `datasets/` и остальные ресурсы. Чтобы включить подготовленные карты, сначала выполните `pnpm datasets:download`. Каталоги русских названий также копируются в сборку. Проект предназначен для некоммерческого использования.
 
-## Contribute
+## Участие в оригинальном проекте
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for a short guide. Use English and submit focused pull requests into `main`.
+Краткое руководство находится в [CONTRIBUTING.md](CONTRIBUTING.md). Для изменений, предлагаемых в оригинальный проект, используйте английский язык и отправляйте отдельные pull request в `main`.
 
 ```bash
 pnpm check
 ```
 
-This checks types, lint, application tests, and the build. CI runs the broader integration and visual checks. You do not need to run a renderer for an application change.
+Команда проверяет типы, линтер, тесты приложения и сборку. В CI дополнительно выполняются интеграционные и визуальные проверки. Для изменений приложения запускать рендерер не требуется.
 
-## Rebuild a map
+## Повторное создание карты
 
-Ready WebP tiles are distributed as map archives in GitHub Releases; runtime JSON, metadata, the transport lock and upload plan use regular Git. Game files, textures, meshes, and intermediate renders must never be committed.
+Готовые тайлы WebP распространяются архивами карт через GitHub Releases; JSON-данные приложения, метаданные, файл фиксации релиза и план загрузки хранятся в Git. Игровые файлы, текстуры, модели и промежуточные результаты рендеринга нельзя добавлять в репозиторий.
 
-Supply your own matching inputs in ignored `local-data/inputs/`, then use:
+Поместите собственные подходящие исходные файлы в исключённый из Git каталог `local-data/inputs/`, затем выполните:
 
 ```bash
 pnpm render:check all
 pnpm render:smoke all
 pnpm render:all
-# Or: pnpm render:original / pnpm render:tamriel-rebuilt
-#     pnpm render:project-cyrodiil / pnpm render:home-of-nords
-#     pnpm render:azurian-isles
+# Или отдельную карту: pnpm render:original / pnpm render:tamriel-rebuilt
+#                     pnpm render:project-cyrodiil / pnpm render:home-of-nords
+#                     pnpm render:azurian-isles
 ```
 
-Lyithdonea requires OAAB Data in addition to GOTY and Tamriel Data.
+Для Lyithdonea помимо GOTY и Tamriel Data необходим OAAB Data.
 
-Rendering needs Python 3.10+, Docker with Linux AMD64 support, and ImageMagick. Full renders can take hours. The workflow produces a candidate for local preview before you adopt or contribute it.
+Для рендеринга нужны Python 3.10+, Docker с поддержкой Linux AMD64 и ImageMagick. Полный рендеринг может занять несколько часов. Сначала создаётся кандидат для локального просмотра, который затем можно принять или предложить проекту.
 
-- [Rendering](docs/RENDERING.md): input layout, commands, settings, and preview.
-- [TR release profiles](docs/TR_UPDATE.md): preparing a new Tamriel Rebuilt version.
-- [Dataset contributions](docs/DATASET_CONTRIBUTING.md): contributing prepared map packages and metadata.
-- [Architecture](docs/ARCHITECTURE.md): runtime, data formats, and browser storage.
-- [Testing](docs/TESTING.md): choosing checks for your change.
-- [Third-party notices](THIRD_PARTY_NOTICES.md).
+- [Рендеринг](docs/RENDERING.md): расположение входных файлов, команды, настройки и предпросмотр.
+- [Профили релизов TR](docs/TR_UPDATE.md): подготовка новой версии Tamriel Rebuilt.
+- [Работа с наборами данных](docs/DATASET_CONTRIBUTING.md): подготовка пакетов карт и метаданных.
+- [Архитектура](docs/ARCHITECTURE.md): приложение, форматы данных и хранение в браузере.
+- [Тестирование](docs/TESTING.md): выбор подходящих проверок.
+- [Уведомления о сторонних материалах](THIRD_PARTY_NOTICES.md).
 
-## License
+## Лицензия и права
 
-Original project code and documentation are source-available under the
-[PolyForm Noncommercial License 1.0.0](LICENSE). You may use, modify and
-redistribute them for purposes permitted by that license. Commercial products
-and services based on this code require separate permission from the relevant
-rights holders; the license is not an OSI-approved open-source license.
+Код и документация оригинального проекта распространяются по [PolyForm Noncommercial License 1.0.0](LICENSE). Их использование, изменение и распространение разрешены в пределах этой лицензии. Для коммерческих продуктов и сервисов на основе кода требуется отдельное разрешение соответствующих правообладателей; лицензия не является свободной лицензией, одобренной OSI.
 
 Required Notice: Copyright (c) 2026 Morrowind Map contributors.
 
-This license does not cover third-party components or underlying game and mod
-content, including content depicted in generated maps. Their respective rights
-and licenses remain in effect; see [Third-party notices](THIRD_PARTY_NOTICES.md).
+Лицензия проекта не предоставляет прав на сторонние компоненты, содержимое Morrowind и модификаций или их переводы. На них распространяются права и лицензии соответствующих авторов и правообладателей. Подробнее — в [уведомлениях о сторонних материалах](THIRD_PARTY_NOTICES.md).

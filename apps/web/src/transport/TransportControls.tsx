@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
 import { TRANSPORT_MODES, type TransportCatalog, type TransportMode } from './types';
@@ -48,6 +49,19 @@ export function TransportControls({
   onModesChange, status, onRetry, catalog, selectedStopId,
   onStopSelect, onDestinationSelect, wikiUrl, onCopyLink,
 }: TransportControlsProps) {
+  const { i18n } = useTranslation();
+  const ru = i18n.resolvedLanguage === 'ru';
+  const label = (en: string, russian: string) => ru ? russian : en;
+  const subtypeNames: Record<string, string> = { Boat: 'Корабль', 'Silt strider': 'Силт-страйдер', 'Guild guide': 'Гид гильдии', Gondola: 'Гондола', Waterstrider: 'Водоход', Palanquin: 'Паланкин', Caravan: 'Караван', Carriage: 'Повозка' };
+  const conditionNames: Record<string, string> = {
+    'House Indoril membership required.': 'Требуется членство в Доме Индорил.',
+    'Unavailable after this carrier is freed.': 'Недоступно после освобождения перевозчика.',
+    'Mages Guild rank Conjurer or higher required for interregional travel.': 'Для межрегиональных поездок требуется звание заклинателя Гильдии магов или выше.',
+    'Available after the main quest introduces travel to Holamayan.': 'Доступно после открытия пути в Холамаян по основному сюжету.',
+    'Requires Raven Rock colony progress (ColonyState 3 or later).': 'Требуется развитие колонии Воронья Скала (ColonyState 3 или выше).',
+    'Requires Turbulent Teleporting (journal stage 120 or later, excluding the failed stage 130).': 'Требуется задание Turbulent Teleporting (стадия журнала 120 или выше, кроме неудачной стадии 130).',
+    'Available after Firemoth progression reaches stage 3.': 'Доступно после достижения стадии 3 задания Firemoth.',
+  };
   const id = useId();
   const controlsRef = useRef<HTMLDivElement>(null);
   const optionsButtonRef = useRef<HTMLButtonElement>(null);
@@ -108,8 +122,8 @@ export function TransportControls({
 
   const feedback = enabled && (status === 'loading' || status === 'error') ? (
     <div className="transport-feedback" role="status">
-      {status === 'loading' ? 'Loading transport networks…' : (
-        <>Transport could not be loaded. <button type="button" onClick={onRetry}>Retry</button></>
+      {status === 'loading' ? label('Loading transport networks…', 'Загрузка транспортных маршрутов…') : (
+        <>{label('Transport could not be loaded.', 'Не удалось загрузить маршруты.')} <button type="button" onClick={onRetry}>{label('Retry', 'Повторить')}</button></>
       )}
     </div>
   ) : null;
@@ -127,15 +141,15 @@ export function TransportControls({
           }
         }}
       >
-        <div className="transport-toolbar" role="group" aria-label="Transport overlay">
+        <div className="transport-toolbar" role="group" aria-label={label('Transport overlay', 'Транспортная сеть')}>
           <button type="button" className="transport-toggle" aria-pressed={enabled} onClick={onToggle}>
-            <span>Transport</span><span className="transport-toggle-state" aria-hidden="true">{enabled ? 'On' : 'Off'}</span>
+            <span>{label('Transport', 'Транспорт')}</span><span className="transport-toggle-state" aria-hidden="true">{enabled ? label('On', 'Вкл.') : label('Off', 'Выкл.')}</span>
           </button>
           <button
             type="button"
             className="transport-options-toggle"
             ref={optionsButtonRef}
-            aria-label="Transport options"
+            aria-label={label('Transport options', 'Настройки транспорта')}
             aria-expanded={expanded}
             aria-controls={`${id}-options`}
             onClick={() => onExpandedChange(!expanded)}
@@ -144,9 +158,9 @@ export function TransportControls({
           </button>
         </div>
         {expanded ? (
-          <section id={`${id}-options`} className="transport-options" aria-label="Transport options">
+          <section id={`${id}-options`} className="transport-options" aria-label={label('Transport options', 'Настройки транспорта')}>
             <fieldset>
-              <legend>Transport networks</legend>
+              <legend>{label('Transport networks', 'Виды транспорта')}</legend>
               {MODE_ORDER.map((mode, index) => (
                 <label className="transport-option" key={mode}>
                   <input
@@ -158,12 +172,12 @@ export function TransportControls({
                       : modes.filter((candidate) => candidate !== mode))}
                   />
                   <ModeSample mode={mode} />
-                  <span><strong>{TRANSPORT_MODES[mode].label}</strong><small>{MODE_DESCRIPTIONS[mode]}</small></span>
+                  <span><strong>{label(TRANSPORT_MODES[mode].label, { land: 'Наземный транспорт', water: 'Водный транспорт', guild: 'Гиды гильдии' }[mode])}</strong><small>{label(MODE_DESCRIPTIONS[mode], { land: 'Силт-страйдеры, повозки и другие наземные перевозки', water: 'Корабли, гондолы и водоходы', guild: 'Телепортация Гильдии магов' }[mode])}</small></span>
                 </label>
               ))}
             </fieldset>
-            <p className="transport-help">Lines show connections, not the path travelled.</p>
-            {!enabled ? <p className="transport-off-note">Turn Transport on to show the selected networks.</p> : null}
+            <p className="transport-help">{label('Lines show connections, not the path travelled.', 'Линии показывают связи между остановками, а не путь движения.')}</p>
+            {!enabled ? <p className="transport-off-note">{label('Turn Transport on to show the selected networks.', 'Включите транспорт, чтобы увидеть выбранные маршруты.')}</p> : null}
             {feedback}
           </section>
         ) : feedback}
@@ -180,46 +194,46 @@ export function TransportControls({
             }
           }}
         >
-          <button className="transport-card-close" type="button" aria-label="Close transport stop" onClick={() => {
+          <button className="transport-card-close" type="button" aria-label={label('Close transport stop', 'Закрыть остановку')} onClick={() => {
             onStopSelect(null);
             optionsButtonRef.current?.focus();
           }}><PixelIcon name="close" /></button>
-          <p className="transport-card-eyebrow">Transport stop</p>
+          <p className="transport-card-eyebrow">{label('Transport stop', 'Остановка')}</p>
           <div className="place-card-title">
             <h2 id={`${id}-stop-title`} ref={cardTitleRef} tabIndex={-1}>
               {wikiUrl ? <a href={wikiUrl} target="_blank" rel="noopener noreferrer">{selectedStop.name}</a> : selectedStop.name}
             </h2>
-            <button className="place-card-copy-link" type="button" onClick={() => void copyLink()} aria-label="Copy transport stop link" title="Copy transport stop link">
+            <button className="place-card-copy-link" type="button" onClick={() => void copyLink()} aria-label={label('Copy transport stop link', 'Копировать ссылку на остановку')} title={label('Copy transport stop link', 'Копировать ссылку на остановку')}>
               <PixelIcon name="link" />
             </button>
           </div>
           {currentCopyFeedback ? <p key={currentCopyFeedback.sequence}
             className={`place-share-feedback${currentCopyFeedback.failed ? ' place-share-feedback--error' : ''}`}
             role={currentCopyFeedback.failed ? 'alert' : 'status'}>
-            {currentCopyFeedback.failed ? 'Could not copy link. Please try again.' : 'Link copied.'}
+            {currentCopyFeedback.failed ? label('Could not copy link. Please try again.', 'Не удалось скопировать ссылку. Попробуйте ещё раз.') : label('Link copied.', 'Ссылка скопирована.')}
           </p> : null}
-          {selectedStop.external ? <p className="transport-card-note">Outside this map’s coverage.</p> : null}
-          {selectedStop.interior ? <p className="transport-card-note">Service inside {selectedStop.interior}.</p> : null}
-          <h3>Departures <span>{departures.length}</span></h3>
-          {departures.length === 0 ? <p className="transport-card-note">No departures with the current transport options. This may be an arrival point.</p> : (
+          {selectedStop.external ? <p className="transport-card-note">{label('Outside this map’s coverage.', 'За пределами этой карты.')}</p> : null}
+          {selectedStop.interior ? <p className="transport-card-note">{label('Service inside', 'Остановка внутри')} {selectedStop.interior}.</p> : null}
+          <h3>{label('Departures', 'Отправления')} <span>{departures.length}</span></h3>
+          {departures.length === 0 ? <p className="transport-card-note">{label('No departures with the current transport options. This may be an arrival point.', 'Для выбранных видов транспорта отправлений нет. Возможно, это конечная остановка.')}</p> : (
             <ul className="transport-departures">
               {departures.map((route) => (
                 <li key={route.id}>
                   <div className="transport-destination-row">
                     <ModeSample mode={route.mode} />
                     {stopsById.get(route.to)?.external ? (
-                      <span className="transport-destination transport-destination--external"><span className="transport-direction" aria-label="To">→</span> {stopsById.get(route.to)?.name ?? route.to}<small>Outside this map</small></span>
+                      <span className="transport-destination transport-destination--external"><span className="transport-direction" aria-label={label('To', 'До')}>→</span> {stopsById.get(route.to)?.name ?? route.to}<small>{label('Outside this map', 'За пределами карты')}</small></span>
                     ) : (
                       <button type="button" className="transport-destination" onClick={() => onDestinationSelect(route.to)}>
-                        <span className="transport-direction" aria-label="To">→</span> {stopsById.get(route.to)?.name ?? route.to}
+                        <span className="transport-direction" aria-label={label('To', 'До')}>→</span> {stopsById.get(route.to)?.name ?? route.to}
                       </button>
                     )}
                   </div>
-                  <p className="transport-provider">{route.subtype.replaceAll('_', ' ')} · {route.provider}</p>
+                  <p className="transport-provider">{ru ? (subtypeNames[route.subtype] ?? route.subtype.replaceAll('_', ' ')) : route.subtype.replaceAll('_', ' ')} · {route.provider}</p>
                   {route.conditions.length > 0 ? (
                     <div className="transport-conditions">
-                      <strong>Requires</strong>
-                      <ul>{route.conditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
+                      <strong>{label('Requires', 'Требуется')}</strong>
+                      <ul>{route.conditions.map((condition) => <li key={condition}>{ru ? (conditionNames[condition] ?? condition) : condition}</li>)}</ul>
                     </div>
                   ) : null}
                 </li>

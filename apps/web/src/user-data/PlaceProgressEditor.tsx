@@ -1,6 +1,5 @@
 import { useId, useRef, useState, type FormEvent } from 'react';
 import type {
-  Locale,
   ProgressRecord,
   ProgressStatus,
 } from '@morrowind-map/contracts';
@@ -35,7 +34,7 @@ export interface PlaceProgressEditorProps {
   readonly datasetId: string;
   readonly placeId: string;
   readonly progress?: ProgressRecord;
-  readonly locale: Locale;
+  readonly locale: 'en' | 'ru';
   readonly database?: MorrowindMapDatabase;
   readonly disabled?: boolean;
   readonly onSaved?: (progress: ProgressRecord) => void;

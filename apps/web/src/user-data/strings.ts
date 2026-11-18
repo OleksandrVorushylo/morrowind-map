@@ -1,4 +1,4 @@
-import type { Locale, ProgressStatus } from '@morrowind-map/contracts';
+import type { ProgressStatus } from '@morrowind-map/contracts';
 import type { BackupImportResult } from '../storage/userData';
 
 interface UserDataStrings {
@@ -65,7 +65,22 @@ const EN: UserDataStrings = {
     `${result.progressSkipped + result.markersSkipped} kept locally.`,
 };
 
-export function getUserDataStrings(locale: Locale): UserDataStrings {
-  void locale;
-  return EN;
+const RU: UserDataStrings = {
+  dataToolsTitle: 'Данные и резервные копии', exportJson: 'Скачать резервную копию JSON',
+  importJson: 'Импортировать резервную копию JSON', importJsonHint: 'Файлы JSON до 10 МБ',
+  importing: 'Импорт…', exporting: 'Подготовка копии…', backupExported: 'Резервная копия скачана.',
+  fileTooLarge: 'Размер файла превышает 10 МБ. Выберите файл меньшего размера.',
+  operationFailed: (detail, retryLabel) => `Ошибка: ${detail}. Нажмите «${retryLabel}», чтобы повторить.`,
+  placeProgress: 'Прогресс места', status: 'Статус', note: 'Личная заметка',
+  noteSaveFailed: (detail) => `Не удалось сохранить заметку: ${detail}. Повторите сохранение.`,
+  saved: 'Сохранено.', customMarker: 'Личная метка', label: 'Название метки', save: 'Сохранить',
+  deleteMarker: 'Удалить', confirmDelete: 'Удалить метку? Это действие нельзя отменить.',
+  confirmDeleteAction: 'Да, удалить', cancel: 'Отмена', deleting: 'Удаление…', deleted: 'Метка удалена.',
+  statuses: { unvisited: 'Не посещено', active: 'В процессе', visited: 'Посещено' },
+  backupResult: (result) => `Импортировано мест: ${result.progressImported}, меток: ${result.markersImported}; ` +
+    `сохранено локальных записей: ${result.progressSkipped + result.markersSkipped}.`,
+};
+
+export function getUserDataStrings(locale: 'en' | 'ru'): UserDataStrings {
+  return locale === 'ru' ? RU : EN;
 }
