@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MapUrlState } from './navigation/mapUrlState';
 import { App } from './App';
+import { Capacitor } from '@capacitor/core';
 
 vi.mock('@morrowind-map/contracts', () => ({
   parseDatasetIndex: (value: unknown) => value,
@@ -127,6 +128,18 @@ describe('App dataset workflow', () => {
   });
 
   afterEach(cleanup);
+
+  it('does not present analytics in the offline Android application', async () => {
+    const platform = vi.spyOn(Capacitor, 'getPlatform').mockReturnValue('android');
+    try {
+      render(<App />);
+      await screen.findAllByRole('button', { name: /Open map:/ });
+      expect(screen.queryByRole('heading', { name: 'Analytics cookies' })).not.toBeInTheDocument();
+      expect(document.getElementById('google-analytics-gtag')).toBeNull();
+    } finally {
+      platform.mockRestore();
+    }
+  });
 
   it('opens Project Cyrodiil as the third map once its dataset is prepared', async () => {
     const cyrodiil = manifestFixture('abecean-shores-25.05', 'project-cyrodiil', 'Project Cyrodiil');

@@ -123,6 +123,29 @@ describe('editor crash-recovery drafts', () => {
     expect(screen.getByRole('status')).toBe(savedFeedback);
   });
 
+  it('saves the visible place note when the keyboard changes the field without an input event', async () => {
+    render(
+      <PlaceProgressEditor
+        datasetId={datasetId}
+        placeId={placeId}
+        locale="en"
+        database={database}
+      />,
+    );
+    const note = screen.getByRole('textbox', { name: 'Personal note' });
+    fireEvent.change(note, { target: { value: 'Первое ' } });
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(note, 'Первое второе');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(async () => {
+      expect(await database.progress.get(progressKey(datasetId, placeId))).toMatchObject({
+        note: 'Первое второе',
+      });
+    });
+    expect(note).toHaveValue('Первое второе');
+  });
+
   it('ignores a place-note draft from the retired user-data epoch', async () => {
     const placeKey = `${datasetId}\0${placeId}`;
     window.localStorage.setItem(
@@ -175,6 +198,31 @@ describe('editor crash-recovery drafts', () => {
         note: '  Marker note\nSecond line  ',
       });
     });
+  });
+
+  it('saves the visible marker name and note when keyboard input events are missing', async () => {
+    const marker = await saveCustomMarker(
+      database,
+      { datasetId, label: 'Original label', note: '', position: [10, 20] },
+      undefined,
+      () => 'keyboard-marker',
+    );
+    render(<CustomMarkerEditor marker={marker} locale="en" database={database} />);
+    const label = screen.getByRole('textbox', { name: 'Marker name' });
+    const note = screen.getByRole('textbox', { name: 'Personal note' });
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(label, 'Личная метка');
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(note, 'Первое второе');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(async () => {
+      expect(await database.customMarkers.get(marker.id)).toMatchObject({
+        label: 'Личная метка',
+        note: 'Первое второе',
+      });
+    });
+    expect(label).toHaveValue('Личная метка');
+    expect(note).toHaveValue('Первое второе');
   });
 
   it('ignores a custom-marker draft from the retired user-data epoch', async () => {

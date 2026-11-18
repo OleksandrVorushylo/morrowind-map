@@ -178,7 +178,14 @@ export function CustomMarkerEditor({
 
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void persist(label, note);
+    const nextLabel = event.currentTarget.querySelector('input')?.value ?? label;
+    const nextNote = event.currentTarget.querySelector('textarea')?.value ?? note;
+    if (nextLabel !== label || nextNote !== note) {
+      const nextDraft = { markerId: marker.id, label: nextLabel, note: nextNote };
+      setDraft(nextDraft);
+      writeStoredMarkerDraft(nextDraft);
+    }
+    void persist(nextLabel, nextNote);
   };
 
   const remove = async () => {

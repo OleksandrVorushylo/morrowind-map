@@ -11,6 +11,7 @@ import {
 } from '../storage/userData';
 import { PixelIcon } from '../ui/PixelIcon';
 import { getUserDataStrings } from './strings';
+import { saveNativeBackup } from './nativeBackup';
 
 const MAX_BACKUP_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -98,7 +99,7 @@ export function DataTools({
     return operationId;
   };
 
-  const finishOperation = (operationId: number, nextFeedback: Feedback) => {
+  const finishOperation = (operationId: number, nextFeedback: Feedback | null) => {
     if (
       latestOperationRef.current === operationId &&
       activeOperationRef.current === operationId
@@ -126,7 +127,13 @@ export function DataTools({
       const backup = mode === 'conflict-export-only'
         ? await createPortableBackupForStoredDataset(database, datasetId)
         : await createPortableBackup(database, datasetSnapshots);
-      downloadBackup(`${JSON.stringify(backup, null, 2)}\n`, backup.exportedAt);
+      const contents = `${JSON.stringify(backup, null, 2)}\n`;
+      const saved = await saveNativeBackup(`morrowind-map-backup-${backup.exportedAt.slice(0, 10)}.json`, contents);
+      if (saved === null) downloadBackup(contents, backup.exportedAt);
+      if (saved === false) {
+        finishOperation(operationId, null);
+        return;
+      }
       finishOperation(operationId, { tone: 'status', kind: 'backup-exported', operationId });
     } catch (error: unknown) {
       failOperation(operationId, error, strings.exportJson);

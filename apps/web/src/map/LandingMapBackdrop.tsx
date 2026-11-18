@@ -104,9 +104,9 @@ function highestPreviewLevel(coverage: TileCoverage): TileCoverageLevel {
 
 function tileUrl(template: string, z: number, x: number, y: number): string {
   const resolved = template
-    .replaceAll('{z}', String(z))
-    .replaceAll('{x}', String(x))
-    .replaceAll('{y}', String(y));
+    .split('{z}').join(String(z))
+    .split('{x}').join(String(x))
+    .split('{y}').join(String(y));
   if (resolved.includes('{z}') || resolved.includes('{x}') || resolved.includes('{y}')) {
     throw new Error('Landing map tile URL template could not be resolved');
   }

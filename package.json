@@ -51,10 +51,15 @@
     "deploy:package": "python3 -m tools.deployment.package_release",
     "deploy:datasets:plan": "python3 -m tools.deployment.upload_datasets --plan-output artifacts/deployment/dataset-upload-plan.json",
     "deploy:datasets:upload": "python3 -m tools.deployment.upload_datasets",
-    "deploy:health": "python3 -m tools.deployment.health_check"
+    "deploy:health": "python3 -m tools.deployment.health_check",
+    "android:check-data": "python3 -m tools.android.verify_data",
+    "android:verify-apk": "python3 -m tools.android.verify_apk",
+    "android:sync": "MORROWIND_ANDROID_BUILD=1 pnpm build && pnpm exec cap sync android",
+    "android:apk": "bash tools/android/build.sh"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
+    "@capacitor/cli": "8.6.2",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.62.1",
     "@testing-library/jest-dom": "7.0.1",
@@ -73,5 +78,9 @@
     "typescript-eslint": "8.68.0",
     "vite": "8.2.2",
     "vitest": "4.1.11"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2"
   }
 }

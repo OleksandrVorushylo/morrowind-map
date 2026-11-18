@@ -2,3 +2,5 @@
 tools/openmw_renderer/patches/*.patch -whitespace
 
 config/dataset-upload-plan.json linguist-generated=true
+
+android/gradlew.bat text eol=crlf

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Capacitor } from '@capacitor/core';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { DatasetManifest } from '@morrowind-map/contracts';
 import { AnalyticsConsentBanner } from './analytics/AnalyticsConsent';
@@ -287,7 +288,7 @@ export function App() {
             commitNavigationState(LANDING_URL_STATE, 'push');
           }}
         />
-        <AnalyticsConsentBanner showSettings={false} />
+        {Capacitor.getPlatform() !== 'android' ? <AnalyticsConsentBanner showSettings={false} /> : null}
       </>
     );
   }
@@ -440,7 +441,7 @@ export function App() {
       </div>
       {navigationState.datasetId === null ? <LandingContact /> : null}
       </main>
-      <AnalyticsConsentBanner showSettings={navigationState.datasetId === null} />
+      {Capacitor.getPlatform() !== 'android' ? <AnalyticsConsentBanner showSettings={navigationState.datasetId === null} /> : null}
     </>
   );
 }

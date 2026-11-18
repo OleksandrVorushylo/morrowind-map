@@ -44,6 +44,23 @@ describe('Dexie user data storage', () => {
     await database.delete();
   });
 
+  it('creates a secure marker identifier when randomUUID is unavailable', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(crypto, 'randomUUID');
+    Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
+    try {
+      const marker = await saveCustomMarker(database, {
+        datasetId,
+        label: 'Offline marker',
+        note: '',
+        position: [1, 2],
+      });
+      expect(marker.id).toMatch(/^original-goty-hd\.custom\.[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    } finally {
+      if (descriptor) Object.defineProperty(crypto, 'randomUUID', descriptor);
+      else Reflect.deleteProperty(crypto, 'randomUUID');
+    }
+  });
+
   it('uses a fresh two-map EN epoch instead of opening the retired database', async () => {
     expect(DATABASE_NAME).toBe('morrowind-map-two-map-en-v1');
 

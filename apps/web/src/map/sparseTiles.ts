@@ -117,8 +117,8 @@ export function createSparseTileUrlFunction(
     }
 
     return pyramid.urlTemplate
-      .replaceAll('{z}', String(z))
-      .replaceAll('{x}', String(x))
-      .replaceAll('{y}', String(y));
+      .split('{z}').join(String(z))
+      .split('{x}').join(String(x))
+      .split('{y}').join(String(y));
   };
 }

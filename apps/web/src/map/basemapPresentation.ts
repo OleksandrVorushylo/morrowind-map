@@ -18,7 +18,7 @@ export function createOverscaledViewResolutions(
   scale = BASEMAP_INITIAL_OVERSCALE,
 ): number[] {
   const resolutions = createTes3Resolutions(pyramid);
-  const finestResolution = resolutions.at(-1);
+  const finestResolution = resolutions[resolutions.length - 1];
 
   if (finestResolution === undefined || !Number.isFinite(scale) || scale <= 1) {
     return resolutions;

@@ -173,7 +173,12 @@ export function PlaceProgressEditor({
 
   const saveNote = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void persistNote(note);
+    const nextNote = event.currentTarget.querySelector('textarea')?.value ?? note;
+    if (nextNote !== note) {
+      setDraft({ placeKey, value: nextNote });
+      writeStoredNoteDraft(placeKey, nextNote);
+    }
+    void persistNote(nextNote);
   };
 
   return (

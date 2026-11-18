@@ -229,7 +229,7 @@ export function TransportControls({
                       </button>
                     )}
                   </div>
-                  <p className="transport-provider">{ru ? (subtypeNames[route.subtype] ?? route.subtype.replaceAll('_', ' ')) : route.subtype.replaceAll('_', ' ')} · {route.provider}</p>
+                  <p className="transport-provider">{ru ? (subtypeNames[route.subtype] ?? route.subtype.split('_').join(' ')) : route.subtype.split('_').join(' ')} · {route.provider}</p>
                   {route.conditions.length > 0 ? (
                     <div className="transport-conditions">
                       <strong>{label('Requires', 'Требуется')}</strong>

@@ -149,6 +149,7 @@ textarea:focus-visible,
   position: relative;
   display: grid;
   min-width: 320px;
+  min-height: 100vh;
   min-height: 100dvh;
   overflow: hidden;
   isolation: isolate;
@@ -225,6 +226,7 @@ textarea:focus-visible,
   align-items: start;
   gap: clamp(40px, 6vw, 96px);
   width: min(1280px, calc(100% - 2 * clamp(32px, 9vw, 150px)));
+  min-height: 100vh;
   min-height: 100dvh;
   margin-left: clamp(32px, 9vw, 150px);
   padding:
@@ -319,6 +321,7 @@ textarea:focus-visible,
   display: grid;
   width: min(440px, calc(100% - 88px));
   min-height: 220px;
+  max-height: calc(100vh - 36px - var(--safe-top) - var(--safe-bottom));
   max-height: calc(100dvh - 36px - var(--safe-top) - var(--safe-bottom));
   place-items: center;
   overflow: auto;
@@ -756,6 +759,7 @@ dialog.map-settings-panel {
 .map-screen {
   display: grid;
   width: 100%;
+  height: 100vh;
   height: 100dvh;
   min-height: 480px;
   grid-template-rows: auto minmax(0, 1fr);
@@ -1940,6 +1944,7 @@ dialog.map-settings-panel {
 
 @media (max-height: 480px) and (min-width: 561px) {
   .map-screen {
+    min-height: 100vh;
     min-height: 100dvh;
   }
 
@@ -2004,6 +2009,7 @@ dialog.map-settings-panel {
     left: max(8px, var(--safe-left));
     width: auto;
     min-height: 200px;
+    max-height: calc(100vh - 16px - var(--safe-top) - var(--safe-bottom));
     max-height: calc(100dvh - 16px - var(--safe-top) - var(--safe-bottom));
     padding-right: 22px;
     padding-left: 22px;
@@ -2056,6 +2062,7 @@ dialog.map-settings-panel {
   .dataset-workspace {
     width: 100%;
     max-width: 100%;
+    grid-template-rows: minmax(190px, 31vh) minmax(0, 1fr);
     grid-template-rows: minmax(190px, 31dvh) minmax(0, 1fr);
     grid-template-columns: 1fr;
     overflow: hidden;
@@ -2154,6 +2161,11 @@ dialog.map-settings-panel {
     max-height: calc(100% - 16px);
     padding: 17px 16px 14px;
     overflow: auto;
+  }
+
+  .place-progress-editor textarea,
+  .custom-marker-editor textarea {
+    min-height: 116px;
   }
 
   .marker-legend {
