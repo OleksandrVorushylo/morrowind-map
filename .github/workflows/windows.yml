@@ -1,0 +1,57 @@
+name: Windows compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full_android:
+        description: Download all maps and build the Android APK
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check map downloads and concurrent locking
+        run: >-
+          python -m unittest -v
+          tools.deployment.tests.test_file_lock
+          tools.deployment.tests.test_download_datasets.DownloadTests.test_source_zip_download_restores_graph_and_reuses_installed_maps
+          tools.deployment.tests.test_download_datasets.DownloadTests.test_default_restores_all_five_maps_and_ignores_abandoned_staging
+          tools.deployment.tests.test_download_datasets.DownloadTests.test_concurrent_installs_fetch_once_and_never_mix_files
+          tools.deployment.tests.test_download_datasets.DownloadTests.test_corrupt_installed_tile_is_replaced_only_after_verified_download
+      - name: Build web application
+        run: pnpm build
+      - uses: actions/setup-java@v5
+        if: github.event_name == 'workflow_dispatch' && inputs.full_android
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Download all maps
+        if: github.event_name == 'workflow_dispatch' && inputs.full_android
+        run: pnpm datasets:download --anonymous --discard-cache
+      - name: Build offline Android APK
+        if: github.event_name == 'workflow_dispatch' && inputs.full_android
+        run: pnpm android:apk

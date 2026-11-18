@@ -14,16 +14,16 @@ for tile_set in tile_sets:
     if not _installed(tile_set, public / 'datasets/generated'):
         raise SystemExit(f'Missing or invalid map data: {tile_set.dataset_id}. Run pnpm datasets:download.')
 
-index = json.loads((public / 'datasets/index.json').read_text())
+index = json.loads((public / 'datasets/index.json').read_text(encoding='utf-8'))
 required = {'original-goty-hd', 'poison-song-26.08', 'abecean-shores-26.09', 'dragonstar-26.09'}
 for entry in index['datasets']:
     dataset_id = entry['datasetId']
     if dataset_id not in required:
         continue
-    manifest = json.loads((public / entry['manifestUrl'].lstrip('/')).read_text())
-    locale = json.loads((public / 'local-localization' / f'{dataset_id}.json').read_text())
+    manifest = json.loads((public / entry['manifestUrl'].lstrip('/')).read_text(encoding='utf-8'))
+    locale = json.loads((public / 'local-localization' / f'{dataset_id}.json').read_text(encoding='utf-8'))
     english_url = next(item['artifact']['url'] for item in manifest['artifacts']['locales'] if item['locale'] == 'en')
-    english = json.loads((public / english_url.lstrip('/')).read_text())
+    english = json.loads((public / english_url.lstrip('/')).read_text(encoding='utf-8'))
     if locale['datasetId'] != dataset_id or locale['snapshotId'] != manifest['snapshotId']:
         raise SystemExit(f'Russian names do not match the current map: {dataset_id}.')
     if set(locale['names']) != {place['placeId'] for place in english['places']}:

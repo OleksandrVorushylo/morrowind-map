@@ -28,6 +28,6 @@ with zipfile.ZipFile(apk) as archive:
         print(f'{tile_set.dataset_id}: {len(tile_set.tiles)} verified tiles', flush=True)
     for dataset_id in ('original-goty-hd', 'poison-song-26.08', 'abecean-shores-26.09', 'dragonstar-26.09'):
         name = f'local-localization/{dataset_id}.json'
-        if json.loads(archive.read('assets/public/' + name)) != json.loads((public / name).read_text()):
+        if json.loads(archive.read('assets/public/' + name)) != json.loads((public / name).read_text(encoding='utf-8')):
             raise SystemExit(f'APK Russian catalog does not match: {dataset_id}')
 print(f'APK verified: {apk}')

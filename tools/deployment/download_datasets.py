@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import hashlib
 import http.client
 import os
@@ -19,19 +18,31 @@ from tools.deployment.dataset_packages import (
     TileSet, _copy_tile, _entry_key, _hash_file, _read_lock, _real_directory,
     read_part, read_tile_sets, validate_lock,
 )
+from tools.deployment.file_lock import acquire_file_lock
 from tools.deployment.upload_datasets import build_dataset_plan
 
 
 @contextmanager
 def _exclusive(path: Path):
-    # Directory locks keep synchronization files out of the served public tree.
     _real_directory(path)
-    descriptor = os.open(path, os.O_RDONLY)
-    try:
-        fcntl.flock(descriptor, fcntl.LOCK_EX)
-        yield
-    finally:
-        os.close(descriptor)
+    if os.name == 'nt':
+        lock_root = _real_directory(Path(tempfile.gettempdir()) / 'morrowind-map-locks')
+        identity = os.path.normcase(os.path.realpath(path)).encode('utf-8')
+        lock_path = lock_root / (hashlib.sha256(identity).hexdigest() + '.lock')
+        if lock_path.is_symlink() or (lock_path.exists() and not lock_path.is_file()):
+            raise DeploymentError('Dataset lock must be a regular file')
+        with lock_path.open('a+b') as stream:
+            acquire_file_lock(stream)
+            yield
+    else:
+        descriptor = os.open(path, os.O_RDONLY)
+        try:
+            import fcntl
+
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            yield
+        finally:
+            os.close(descriptor)
 
 
 def _installed(tile_set: TileSet, generated: Path) -> bool:

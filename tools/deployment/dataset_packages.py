@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import hashlib
 import os
 import re
@@ -20,6 +19,7 @@ from tools.deployment.common import (
     require_mapping, require_sequence, require_sha256, require_string, safe_file,
     strict_json_object,
 )
+from tools.deployment.file_lock import acquire_file_lock
 from tools.deployment.upload_datasets import (
     PlannedFile, build_dataset_plan, build_metadata_plan,
 )
@@ -475,8 +475,8 @@ def pack_product_release(*, repo_root: Path, tag: str, bootstrap: bool) -> dict[
     if lock_file.is_symlink():
         raise DeploymentError('Package lock must not be a symlink')
     destination = _real_directory(output / 'releases') / tag
-    with lock_file.open('a') as process_lock:
-        fcntl.flock(process_lock, fcntl.LOCK_EX)
+    with lock_file.open('a+b') as process_lock:
+        acquire_file_lock(process_lock)
         if destination.exists() or destination.is_symlink():
             if destination.is_symlink() or not destination.is_dir():
                 raise DeploymentError('Existing product package is not a real directory')
